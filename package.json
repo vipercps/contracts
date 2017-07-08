@@ -1,0 +1,36 @@
+{
+  "name": "trackr-contracts",
+  "version": "1.0.0",
+  "description": "Contracts to deploy for Trackrs ICO",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://namjad@bitbucket.org/trackr-im/contracts.git"
+  },
+  "keywords": [
+    "truffle",
+    "solidity",
+    "trackr"
+  ],
+  "author": "Nabeel Amjad",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/trackr-im/contracts#readme",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "dependencies": {
+    "truffle": "^3.3.2",
+    "truffle-config": "^1.0.0",
+    "truffle-expect": "0.0.3"
+  },
+  "devDependencies": {
+    "sinon": "^2.3.6",
+    "timekeeper": "^1.0.0"
+  }
+}
