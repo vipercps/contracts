@@ -28,9 +28,5 @@
     "truffle": "^3.3.2",
     "truffle-config": "^1.0.0",
     "truffle-expect": "0.0.3"
-  },
-  "devDependencies": {
-    "sinon": "^2.3.6",
-    "timekeeper": "^1.0.0"
   }
 }
