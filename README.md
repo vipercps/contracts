@@ -2,10 +2,10 @@
 
 ## Overview
 
-This repository contains the contracts that will be deployed as part of the crowdsale.
+This repository contains the contracts that will be deployed as part of the Trackr crowdsale.
 
 ## Setup
-Requires ``testrpc`` to be running (with the provided file) and at least`` node v8.0.0`` or higher.
+Requires ``ethereumjs/testrpc`` to be running (through ``testrpc.sh``) and at least`` node v8.0.0`` or higher.
 
 1. Clone the repository
 
@@ -18,9 +18,15 @@ Requires ``testrpc`` to be running (with the provided file) and at least`` node 
   ```sh
   npm install
   ```
-
-3. Run tests
+  
+3. Launch testrpc
 
   ```sh
-  truffle test
+  npm run testrpc
+  ```
+  
+4. Run the tests
+
+  ```sh
+  npm run tests
   ```
