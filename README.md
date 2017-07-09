@@ -1,4 +1,4 @@
-# Trackr's solidity contracts
+# Solidity contracts for Trackr
 
 ## Overview
 
