@@ -1,4 +1,5 @@
 const TKRToken = artifacts.require("./TKRToken.sol")
+const TKRPToken = artifacts.require("./TKRPToken.sol")
 const Crowdsale = artifacts.require("./Crowdsale.sol")
 
 const weiToEther = wei => web3.fromWei(wei).toNumber()
@@ -8,13 +9,17 @@ contract('Crowdsale', accounts => {
   const owner = accounts[0]
   const user = accounts[1]
   let token
+  let preToken
   let crowdsale
 
   beforeEach(async () => {
     token = await TKRToken.new()
-    crowdsale = await Crowdsale.new(token.address, owner)
+    preToken = await TKRPToken.new()
+    crowdsale = await Crowdsale.new(token.address, preToken.address, owner)
 
     await token.transfer(crowdsale.address, 58500000)
+    await token.transferOwnership(crowdsale.address)
+    await preToken.transferOwnership(crowdsale.address)
   })
 
   describe('constructor', () => {
@@ -36,9 +41,11 @@ contract('Crowdsale', accounts => {
 
     it('sets the owner address and token address', async () => {
       const crowdsaleToken = await crowdsale.token()
+      const preCrowdsaleToken = await crowdsale.preToken()
       const crowdsaleOwner = await crowdsale.crowdsaleOwner()
 
       assert.equal(crowdsaleToken, token.address)
+      assert.equal(preCrowdsaleToken, preToken.address)
       assert.equal(crowdsaleOwner, owner)
     })
 
@@ -181,6 +188,68 @@ contract('Crowdsale', accounts => {
       assert.equal(crowdsalePostFinalizeBalance, 0)
 
       assert.isAbove(crowdsalePostFinalizeOwnerBalance, crowdsalePreFinalizeOwnerBalance)
+    })
+  })
+
+ describe('migrate', () => {
+    it('migrates TKRP tokens to TKR', async () => {
+      const initialPreTokenBalance = await preToken.balanceOf(owner)
+      const initialTokenBalance = await token.balanceOf(owner)
+
+      assert.equal(initialPreTokenBalance, 500000)
+      assert.equal(initialTokenBalance, 6500000)
+
+      await crowdsale.start()
+      await crowdsale.migrate()
+
+      const postPreTokenBalance = await preToken.balanceOf(owner)
+      const postTokenBalance = await token.balanceOf(owner)
+
+      assert.equal(postPreTokenBalance, 0)
+      assert.equal(postTokenBalance, 7000000)
+    })
+
+    it('throws when trying to migrate with no balance', async () => {
+      await crowdsale.start()
+      await crowdsale.migrate()
+
+      try {
+        await crowdsale.migrate()
+      } catch (e) {
+        assert.include(e.message, 'invalid opcode')
+      }
+    })
+
+    it('emits events when migrating', async () => {
+      const migratedTokens = await crowdsale.MigratedTokens()
+      const destroy = await preToken.Destroy()
+
+      await crowdsale.start()
+      await crowdsale.migrate()
+
+      const migratedTokensEvent = migratedTokens.get()[0].args
+      const destroyEvent = destroy.get()[0].args
+
+      assert.equal(migratedTokensEvent._address, owner)
+      assert.equal(migratedTokensEvent.value.toNumber(), 500000)
+      assert.equal(destroyEvent._from, owner)
+    })
+
+    it('does not affect the token cap or tokens sent', async () => {
+      let tokensSent = await crowdsale.tokensSent()
+      let tokenCap = await crowdsale.TOKEN_CAP()
+
+      assert.equal(tokensSent, 0)
+      assert.equal(tokenCap, 58500000)
+
+      await crowdsale.start()
+      await crowdsale.migrate()
+
+      tokensSent = await crowdsale.tokensSent()
+      tokenCap = await crowdsale.TOKEN_CAP()
+
+      assert.equal(tokensSent, 0)
+      assert.equal(tokenCap, 58500000)
     })
   })
 

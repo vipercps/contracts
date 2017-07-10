@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 
 import "./TKRToken.sol";
+import "./TKRPToken.sol";
 import "./Ownable.sol";
 
 
@@ -28,6 +29,7 @@ contract Crowdsale is Ownable {
     /* Events to emit when a contribution has successfully processed */
     event TokensSent(address indexed to, uint256 value);
     event ContributionReceived(address indexed to, uint256 value);
+    event MigratedTokens(address indexed _address, uint256 value);
 
     /* Constants */
     uint256 public constant TOKEN_CAP = 58500000;
@@ -37,6 +39,7 @@ contract Crowdsale is Ownable {
 
     /* Public Variables */
     TKRToken public token;
+    TKRPToken public preToken;
     address public crowdsaleOwner;
     uint256 public etherReceived;
     uint256 public tokensSent;
@@ -54,8 +57,9 @@ contract Crowdsale is Ownable {
     * @param _tokenAddress TKR Token address
     * @param _to crowdsale owner address
     */
-    function Crowdsale(address _tokenAddress, address _to) {
+    function Crowdsale(address _tokenAddress, address _preTokenAddress, address _to) {
         token = TKRToken(_tokenAddress);
+        preToken = TKRPToken(_preTokenAddress);
         crowdsaleOwner = _to;
     }
 
@@ -91,7 +95,23 @@ contract Crowdsale is Ownable {
             throw;
         }
 
+        uint256 remainingBalance = token.balanceOf(this);
+        if (remainingBalance > 0) token.destroy(remainingBalance);
+
         if (!crowdsaleOwner.send(this.balance)) throw;
+    }
+
+    /**
+    * @dev Migrates TKRP tokens to TKR token at a rate of 1:1 during the Crowdsale.
+    */
+    function migrate() crowdsaleRunning {
+        uint256 preTokenBalance = preToken.balanceOf(msg.sender);
+        if (preTokenBalance == 0) throw;
+
+        preToken.destroyFrom(msg.sender);
+        token.transfer(msg.sender, preTokenBalance);
+
+        MigratedTokens(msg.sender, preTokenBalance);
     }
 
     /**
